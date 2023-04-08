@@ -119,7 +119,7 @@ func (s *server) setupTLSListener(opts Opts) error {
 	if opts.TLS == nil {
 		return errors.New("no TLS config provided")
 	}
-	cert, err := getCertificate(opts.TLS)
+	cert, err := util.GetCertificate(opts.TLS)
 	if err != nil {
 		return fmt.Errorf("could not load certificate: %v", err)
 	}
@@ -228,35 +228,6 @@ func getNetworkScheme(addr string) string {
 func getListenAddress(addr string) string {
 	slice := strings.SplitN(addr, "//", 2)
 	return slice[len(slice)-1]
-}
-
-// getCertificate loads the certificate data from the TLS config.
-func getCertificate(opts *options.TLS) (tls.Certificate, error) {
-	keyData, err := getSecretValue(opts.Key)
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("could not load key data: %v", err)
-	}
-
-	certData, err := getSecretValue(opts.Cert)
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("could not load cert data: %v", err)
-	}
-
-	cert, err := tls.X509KeyPair(certData, keyData)
-	if err != nil {
-		return tls.Certificate{}, fmt.Errorf("could not parse certificate data: %v", err)
-	}
-
-	return cert, nil
-}
-
-// getSecretValue wraps util.GetSecretValue so that we can return an error if no
-// source is provided.
-func getSecretValue(src *options.SecretSource) ([]byte, error) {
-	if src == nil {
-		return nil, errors.New("no configuration provided")
-	}
-	return util.GetSecretValue(src)
 }
 
 // tcpKeepAliveListener sets TCP keep-alive timeouts on accepted

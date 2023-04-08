@@ -26,6 +26,7 @@ type Options struct {
 	RealClientIPHeader string   `flag:"real-client-ip-header" cfg:"real_client_ip_header"`
 	TrustedIPs         []string `flag:"trusted-ip" cfg:"trusted_ips"`
 	ForceHTTPS         bool     `flag:"force-https" cfg:"force_https"`
+	MTLSEnabled        bool     `flag:"mtls-enable" cfg:"mtls_enable"`
 	RawRedirectURL     string   `flag:"redirect-url" cfg:"redirect_url"`
 
 	AuthenticatedEmailsFile string   `flag:"authenticated-emails-file" cfg:"authenticated_emails_file"`
@@ -116,6 +117,7 @@ func NewFlagSet() *pflag.FlagSet {
 	flagSet.String("real-client-ip-header", "X-Real-IP", "Header used to determine the real IP of the client (one of: X-Forwarded-For, X-Real-IP, or X-ProxyUser-IP)")
 	flagSet.StringSlice("trusted-ip", []string{}, "list of IPs or CIDR ranges to allow to bypass authentication. WARNING: trusting by IP has inherent security flaws, read the configuration documentation for more information.")
 	flagSet.Bool("force-https", false, "force HTTPS redirect for HTTP requests")
+	flagSet.Bool("mtls-enable", false, "send the oauth2 server's certificate as a client cert to providers for MTLS")
 	flagSet.String("redirect-url", "", "the OAuth Redirect URL. ie: \"https://internalapp.yourcompany.com/oauth2/callback\"")
 	flagSet.StringSlice("skip-auth-regex", []string{}, "(DEPRECATED for --skip-auth-route) bypass authentication for requests path's that match (may be given multiple times)")
 	flagSet.StringSlice("skip-auth-route", []string{}, "bypass authentication for requests that match the method & path. Format: method=path_regex OR method!=path_regex. For all methods: path_regex OR !=path_regex")

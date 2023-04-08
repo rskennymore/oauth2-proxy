@@ -10,6 +10,7 @@ import (
 
 	"github.com/mbland/hmacauth"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options"
+	optionsutil "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/apis/options/util"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/ip"
 	"github.com/oauth2-proxy/oauth2-proxy/v7/pkg/logger"
 	internaloidc "github.com/oauth2-proxy/oauth2-proxy/v7/pkg/providers/oidc"
@@ -40,9 +41,28 @@ func Validate(o *options.Options) error {
 		pool, err := util.GetCertPool(o.Providers[0].CAFiles)
 		if err == nil {
 			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.TLSClientConfig = &tls.Config{
-				RootCAs:    pool,
-				MinVersion: tls.VersionTLS12,
+
+			//If mtls is enabled we can either send the server's normal certs as client certs in exchanges
+			//or use a separate set of certs?
+			if o.MTLSEnabled {
+				//TODO: It's a little weird to be loading the same TLS certs in multiple places like this.
+				// Will look for a way to combine these
+				clientCert, err := optionsutil.GetCertificate(o.Server.TLS)
+
+				if err != nil {
+					msgs = append(msgs, fmt.Sprintf("configured to enable mtls but was unable to load server certificates: %v", err))
+				}
+
+				transport.TLSClientConfig = &tls.Config{
+					RootCAs:      pool,
+					MinVersion:   tls.VersionTLS12,
+					Certificates: []tls.Certificate{clientCert},
+				}
+			} else {
+				transport.TLSClientConfig = &tls.Config{
+					RootCAs:    pool,
+					MinVersion: tls.VersionTLS12,
+				}
 			}
 
 			http.DefaultClient = &http.Client{Transport: transport}
